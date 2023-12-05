@@ -6,7 +6,7 @@ import httpx
 from tenacity import AsyncRetrying, retry, stop_after_attempt, wait_exponential
 
 
-from logger import logger
+from src.logger import logger
 from src.http_response import ResponseWrapper
 
 
@@ -27,7 +27,7 @@ class BaseRequest:
         proxies (Dict, optional): The proxies to use for the request. Defaults to None.
     """
 
-    TIMEOUT: int = 10
+    TIMEOUT: int = 20
     RETRIES: int = 3
     USER_AGENT: str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
 
@@ -51,11 +51,6 @@ class BaseRequest:
         self.json = json
         self.verify = verify
         self.proxies = proxies
-
-
-    @property
-    def request_dict(self):
-        return {k: v for k, v in self.__dict__.items() if v is not None}
 
 
     def __repr__(self):
@@ -86,7 +81,7 @@ class Request(BaseRequest):
         process_request(): Processes the HTTP request and returns a ResponseWrapper object.
     """
 
-    @retry(stop=stop_after_attempt(super.RETRIES), wait=wait_exponential(multiplier=1, min=4, max=10))
+    @retry(stop=stop_after_attempt(BaseRequest.RETRIES), wait=wait_exponential(multiplier=1, min=4, max=10), reraise=True)
     def send(self) -> Response:
         """
         Sends the HTTP request and returns the response.
@@ -97,7 +92,16 @@ class Request(BaseRequest):
 
         try:
             with httpx.Client(verify=self.verify, timeout=self.TIMEOUT) as client:
-                response = client.request(**self.request_dict)
+                response = client.request(
+                    url=self.url, 
+                    method=self.method, 
+                    headers=self.headers, 
+                    cookies=self.cookies, 
+                    params=self.params, 
+                    data=self.data, 
+                    json=self.json, 
+                    proxies=self.proxies
+                )
                 response.raise_for_status()
                 return response
             
@@ -150,10 +154,19 @@ class AsyncRequest(BaseRequest):
         """
 
         async with httpx.AsyncClient(verify=self.verify, timeout=self.TIMEOUT) as client:
-            async for attempt in AsyncRetrying(stop=stop_after_attempt(self.RETRIES), wait=wait_exponential(multiplier=1, min=4, max=10)):
+            async for attempt in AsyncRetrying(stop=stop_after_attempt(self.RETRIES), wait=wait_exponential(multiplier=1, min=4, max=10), reraise=True):
                 with attempt:
                     async with self.RATE_LIMIT:
-                        response = await client.request(**self.request_dict)
+                        response = await client.request(
+                            url=self.url, 
+                            method=self.method, 
+                            headers=self.headers, 
+                            cookies=self.cookies, 
+                            params=self.params, 
+                            data=self.data, 
+                            json=self.json, 
+                            proxies=self.proxies
+                        )
                         response.raise_for_status()
                         logger.debug(f"Request sent to {self.url}: {response.status_code}")
                         return response
@@ -198,6 +211,8 @@ class ZYTE_REQUEST(BaseRequest):
     """
 
     ZYTE_ENDPOINT: str = "https://api.zyte.com/v1/extract"
+    RATE_LIMIT: AsyncLimiter = AsyncLimiter(100, 60)
+
 
     def __init__(self, zyte_api_key: str, browser: bool = False, async_mode: bool = False, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -265,7 +280,7 @@ class ZYTE_REQUEST(BaseRequest):
             Response: The response object.
         """
 
-        for attempt in AsyncRetrying(stop=stop_after_attempt(self.RETRIES), wait=wait_exponential(multiplier=1, min=4, max=10)):
+        async for attempt in AsyncRetrying(stop=stop_after_attempt(self.RETRIES), wait=wait_exponential(multiplier=1, min=4, max=10), reraise=True):
             with attempt:
                 async with self.RATE_LIMIT:
                     response = await client.post(self.ZYTE_ENDPOINT, auth=(self.zyte_api_key, ""), json=json_payload)
@@ -278,8 +293,7 @@ class ZYTE_REQUEST(BaseRequest):
 
                     return Response(
                         status_code=response.status_code, 
-                        request=client.build_request(**self.request_dict), 
-                        content=http_response_body.encode('utf-8'),
+                        request=client.build_request(url=self.url, method=self.method), 
                         text=http_response_body
                     )
 
