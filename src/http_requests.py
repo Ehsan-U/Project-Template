@@ -65,7 +65,7 @@ class BaseRequest:
             e (Exception): The exception that occurred.
 
         Returns:
-            Response: A response object indicating the failure.
+            A response object indicating the failure.
         """
         logger.error(f"All retries failed to {self.url}: {e}")
         return Response(status_code=420, url=self.url, text=str(e))
@@ -77,8 +77,8 @@ class Request(BaseRequest):
     Represents an HTTP request.
 
     Methods:
-        send(): Sends the HTTP request and returns the response.
-        process_request(): Processes the HTTP request and returns a ResponseWrapper object.
+        send: Sends the HTTP request and returns the response.
+        process_request: Processes the HTTP request and returns a ResponseWrapper object.
     """
 
     @retry(stop=stop_after_attempt(BaseRequest.RETRIES), wait=wait_exponential(multiplier=1, min=4, max=10), reraise=True)
@@ -87,7 +87,7 @@ class Request(BaseRequest):
         Sends the HTTP request and returns the response.
 
         Returns:
-            Response: The HTTP response.
+            The HTTP response.
         """
 
         try:
@@ -115,7 +115,7 @@ class Request(BaseRequest):
         Processes the HTTP request and returns a ResponseWrapper object.
 
         Returns:
-            ResponseWrapper: The wrapped HTTP response.
+            The wrapped HTTP response.
         """
 
         try:
@@ -177,7 +177,7 @@ class AsyncRequest(BaseRequest):
         Processes the HTTP request and returns a ResponseWrapper object.
 
         Returns:
-            Optional[ResponseWrapper]: The wrapped response object, or None if an exception occurred.
+            The wrapped response object, or None if an exception occurred.
         """
 
         try:
@@ -227,7 +227,7 @@ class ZYTE_REQUEST(BaseRequest):
         Sends the request asynchronously and returns the response.
 
         Returns:
-            Response: The response object.
+            The response object.
         """
 
         json_payload = self.prepare_payload()
@@ -241,7 +241,7 @@ class ZYTE_REQUEST(BaseRequest):
         Sends the request synchronously and returns the response.
 
         Returns:
-            Response: The response object.
+            The response object.
         """
 
         json_payload = self.prepare_payload()
@@ -255,7 +255,7 @@ class ZYTE_REQUEST(BaseRequest):
         Prepares the payload for the request.
 
         Returns:
-            dict: The prepared payload.
+            The prepared payload.
         """
 
         if self.browser:
@@ -277,7 +277,7 @@ class ZYTE_REQUEST(BaseRequest):
             json_payload: The JSON payload for the request.
 
         Returns:
-            Response: The response object.
+            The response object.
         """
 
         async for attempt in AsyncRetrying(stop=stop_after_attempt(self.RETRIES), wait=wait_exponential(multiplier=1, min=4, max=10), reraise=True):
@@ -303,7 +303,7 @@ class ZYTE_REQUEST(BaseRequest):
         Processes the request and returns a wrapped response.
 
         Returns:
-            Optional[ResponseWrapper]: The wrapped response object, or None if an error occurred.
+            The wrapped response object, or None if an error occurred.
         """
 
         try:
