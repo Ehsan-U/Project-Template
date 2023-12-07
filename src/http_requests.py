@@ -3,7 +3,7 @@ from typing import Dict, Optional
 from aiolimiter import AsyncLimiter
 from httpx import Response
 import httpx
-from tenacity import AsyncRetrying, retry, stop_after_attempt, wait_exponential
+from tenacity import AsyncRetrying, retry, stop_after_attempt, wait_random_exponential
 
 
 from src.logger import logger
@@ -81,7 +81,7 @@ class Request(BaseRequest):
         process_request: Processes the HTTP request and returns a ResponseWrapper object.
     """
 
-    @retry(stop=stop_after_attempt(BaseRequest.RETRIES), wait=wait_exponential(multiplier=1, min=4, max=10), reraise=True)
+    @retry(stop=stop_after_attempt(BaseRequest.RETRIES), wait=wait_random_exponential(multiplier=1, min=4, max=10), reraise=True)
     def send(self) -> Response:
         """
         Sends the HTTP request and returns the response.
@@ -153,7 +153,7 @@ class AsyncRequest(BaseRequest):
         """
 
         async with httpx.AsyncClient(verify=self.verify, timeout=self.TIMEOUT, proxies=self.proxies) as client:
-            async for attempt in AsyncRetrying(stop=stop_after_attempt(self.RETRIES), wait=wait_exponential(multiplier=1, min=4, max=10), reraise=True):
+            async for attempt in AsyncRetrying(stop=stop_after_attempt(self.RETRIES), wait=wait_random_exponential(multiplier=1, min=4, max=10), reraise=True):
                 with attempt:
                     async with self.RATE_LIMIT:
                         response = await client.request(
@@ -278,7 +278,7 @@ class ZYTE_REQUEST(BaseRequest):
             The response object.
         """
 
-        async for attempt in AsyncRetrying(stop=stop_after_attempt(self.RETRIES), wait=wait_exponential(multiplier=1, min=4, max=10), reraise=True):
+        async for attempt in AsyncRetrying(stop=stop_after_attempt(self.RETRIES), wait=wait_random_exponential(multiplier=1, min=4, max=10), reraise=True):
             with attempt:
                 async with self.RATE_LIMIT:
                     response = await client.post(self.ZYTE_ENDPOINT, auth=(self.zyte_api_key, ""), json=json_payload)
