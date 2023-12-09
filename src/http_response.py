@@ -12,7 +12,6 @@ class ResponseWrapper:
 
     def __init__(self, response: Response):
         self.response = response
-        self.selector = Selector(response.text)
         self.url = str(response.url)
 
 
@@ -22,3 +21,20 @@ class ResponseWrapper:
 
     def __str__(self):
         return f"ResponseWrapper({self.response})"
+
+
+    @property
+    def json(self):
+        try:
+            return self.response.json()
+        except:
+            return None
+
+    @property
+    def text(self):
+        return self.response.text
+
+
+    @property
+    def selector(self):
+        return Selector(response.text)
