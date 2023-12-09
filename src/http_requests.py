@@ -44,6 +44,7 @@ class BaseRequest:
             json: Dict = None,
             verify: bool = True,
             proxies: Dict = None,
+            timeout: int = None
         ):
         self.url = url
         self.method = method
@@ -54,6 +55,7 @@ class BaseRequest:
         self.json = json
         self.verify = verify
         self.proxies = proxies
+        self.timeout = timeout or self.TIMEOUT
 
 
     def __repr__(self):
@@ -70,7 +72,7 @@ class BaseRequest:
         Returns:
             A response object indicating the failure.
         """
-        logger.error(f"All retries failed to {self.url}: {e}")
+        logger.error(f"All retries failed to {self.url}: {e}", exc_info=True)
         return Response(status_code=420, url=self.url, text=str(e))
 
 
@@ -94,7 +96,7 @@ class Request(BaseRequest):
             The HTTP response.
         """
 
-        with httpx.Client(verify=self.verify, timeout=self.TIMEOUT, proxies=self.proxies) as client:
+        with httpx.Client(verify=self.verify, timeout=self.timeout, proxies=self.proxies) as client:
             response = client.request(
                 url=self.url, 
                 method=self.method, 
@@ -119,7 +121,7 @@ class Request(BaseRequest):
         try:
             response = self.send()
         except Exception as e:
-            logger.error(e)
+            logger.error(e, exc_info=True)
             return None
         else:
             return ResponseWrapper(response)
@@ -150,7 +152,7 @@ class AsyncRequest(BaseRequest):
             Response: The response received from the server.
         """
 
-        async with httpx.AsyncClient(verify=self.verify, timeout=self.TIMEOUT, proxies=self.proxies) as client:
+        async with httpx.AsyncClient(verify=self.verify, timeout=self.timeout, proxies=self.proxies) as client:
             async for attempt in AsyncRetrying(stop=stop_after_attempt(self.RETRIES), wait=wait_random_exponential(multiplier=1, min=4, max=10), reraise=True):
                 with attempt:
                     async with self.RATE_LIMIT:
@@ -179,7 +181,7 @@ class AsyncRequest(BaseRequest):
         try:
             response = await self.send()
         except Exception as e:
-            logger.error(e)
+            logger.error(e, exc_info=True)
             return None
         else:
             return ResponseWrapper(response)
@@ -187,7 +189,7 @@ class AsyncRequest(BaseRequest):
 
 
 
-class ZYTE_Request(Request):
+class Zyte_Request(Request):
     """
     Represents a request to the Zyte API.
 
@@ -207,7 +209,7 @@ class ZYTE_Request(Request):
     ZYTE_ENDPOINT: str = "https://api.zyte.com/v1/extract"
 
 
-    def __init__(self, zyte_api_key: str, browser: bool = False, *args, **kwargs):
+    def __init__(self, zyte_api_key: str = None, browser: bool = False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
         self.zyte_api_key = zyte_api_key or os.getenv("ZYTE_API_KEY")
@@ -225,7 +227,7 @@ class ZYTE_Request(Request):
 
         json_payload = self.prepare_payload()
         
-        with httpx.Client(verify=self.verify, timeout=self.TIMEOUT) as client:
+        with httpx.Client(verify=self.verify, timeout=self.timeout) as client:
             response = client.post(self.ZYTE_ENDPOINT, auth=(self.zyte_api_key, ""), json=json_payload)
             response.raise_for_status()
 
@@ -260,7 +262,7 @@ class ZYTE_Request(Request):
         
 
 
-class ZYTE_AsyncRequest(AsyncRequest):
+class Zyte_AsyncRequest(AsyncRequest):
     """
     Represents a request to the Zyte API.
 
@@ -279,10 +281,9 @@ class ZYTE_AsyncRequest(AsyncRequest):
     """
 
     ZYTE_ENDPOINT: str = "https://api.zyte.com/v1/extract"
-    RATE_LIMIT: AsyncLimiter = AsyncLimiter(100, 60)
 
 
-    def __init__(self, zyte_api_key: str, browser: bool = False, *args, **kwargs):
+    def __init__(self, zyte_api_key: str = None, browser: bool = False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
         self.zyte_api_key = zyte_api_key or os.getenv("ZYTE_API_KEY")
@@ -299,7 +300,7 @@ class ZYTE_AsyncRequest(AsyncRequest):
 
         json_payload = self.prepare_payload()
 
-        async with httpx.AsyncClient(verify=self.verify, timeout=self.TIMEOUT) as client:
+        async with httpx.AsyncClient(verify=self.verify, timeout=self.timeout) as client:
             async for attempt in AsyncRetrying(stop=stop_after_attempt(self.RETRIES), wait=wait_random_exponential(multiplier=1, min=4, max=10), reraise=True):
                 with attempt:
                     async with self.RATE_LIMIT:
@@ -334,3 +335,4 @@ class ZYTE_AsyncRequest(AsyncRequest):
                 "httpResponseBody": True,
                 "httpRequestMethod": self.method
             }
+
