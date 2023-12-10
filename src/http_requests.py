@@ -107,6 +107,7 @@ class Request(BaseRequest):
                 json=self.json, 
             )
             response.raise_for_status()
+            logger.debug(f"Request sent to {self.url}: {response.status_code}")
             return response
 
 
@@ -230,6 +231,7 @@ class Zyte_Request(Request):
         with httpx.Client(verify=self.verify, timeout=self.timeout) as client:
             response = client.post(self.ZYTE_ENDPOINT, auth=(self.zyte_api_key, ""), json=json_payload)
             response.raise_for_status()
+            logger.debug(f"Request sent to {self.url}: {response.status_code}")
 
             if self.browser:
                 http_response_body = response.json()["browserHtml"]
@@ -306,6 +308,7 @@ class Zyte_AsyncRequest(AsyncRequest):
                     async with self.RATE_LIMIT:
                         response = await client.post(self.ZYTE_ENDPOINT, auth=(self.zyte_api_key, ""), json=json_payload)
                         response.raise_for_status()
+                        logger.debug(f"Request sent to {self.url}: {response.status_code}")
 
                         if self.browser:
                             http_response_body = response.json()["browserHtml"]
