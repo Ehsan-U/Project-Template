@@ -42,7 +42,7 @@ class BaseRequest:
             params: Dict = None,
             data: Dict = None,
             json: Dict = None,
-            verify: bool = True,
+            verify: bool = False,
             proxies: Dict = None,
             timeout: int = None
         ):
