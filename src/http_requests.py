@@ -28,6 +28,7 @@ class BaseRequest:
         json (Dict, optional): The request body JSON. Defaults to None.
         verify (bool, optional): Whether to verify SSL certificates. Defaults to True.
         proxies (Dict, optional): The proxies to use for the request. Defaults to None.
+        follow_redirect (bool): Allow to follow redirect e.g HTTP 302
     """
 
     TIMEOUT: int = 20
@@ -44,7 +45,8 @@ class BaseRequest:
             json: Dict = None,
             verify: bool = True,
             proxies: Dict = None,
-            timeout: int = None
+            timeout: int = None,
+            follow_redirect: bool = True
         ):
         self.url = url
         self.method = method
@@ -56,6 +58,7 @@ class BaseRequest:
         self.verify = verify
         self.proxies = proxies
         self.timeout = timeout or self.TIMEOUT
+        self.follow_redirect = follow_redirect
 
 
     def __repr__(self):
@@ -96,7 +99,7 @@ class Request(BaseRequest):
             The HTTP response.
         """
 
-        with httpx.Client(verify=self.verify, timeout=self.timeout, proxies=self.proxies) as client:
+        with httpx.Client(verify=self.verify, timeout=self.timeout, proxies=self.proxies, follow_redirects=self.follow_redirect) as client:
             response = client.request(
                 url=self.url, 
                 method=self.method, 
@@ -152,7 +155,7 @@ class AsyncRequest(BaseRequest):
             Response: The response received from the server.
         """
 
-        async with httpx.AsyncClient(verify=self.verify, timeout=self.timeout, proxies=self.proxies) as client:
+        async with httpx.AsyncClient(verify=self.verify, timeout=self.timeout, proxies=self.proxies, follow_redirects=self.follow_redirect) as client:
             async for attempt in AsyncRetrying(stop=stop_after_attempt(self.RETRIES), wait=wait_random_exponential(multiplier=1, min=4, max=10), reraise=True):
                 with attempt:
                     async with self.RATE_LIMIT:
