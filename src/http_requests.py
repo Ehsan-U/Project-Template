@@ -193,7 +193,7 @@ class AsyncRequest(BaseRequest):
 
 
 
-class Zyte_Request(Request):
+class ZyteRequest(Request):
     """
     Represents a request to the Zyte API.
 
@@ -267,7 +267,7 @@ class Zyte_Request(Request):
         
 
 
-class Zyte_AsyncRequest(AsyncRequest):
+class ZyteAsyncRequest(AsyncRequest):
     """
     Represents a request to the Zyte API.
 
