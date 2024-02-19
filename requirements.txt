@@ -2,4 +2,3 @@ httpx
 aiolimiter
 parsel
 tenacity
-playwright
