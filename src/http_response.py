@@ -25,12 +25,12 @@ class ResponseWrapper:
 
 
     @property
-    def is_successful(self) -> bool:
+    def is_success(self) -> bool:
         return self.response is not None
     
 
     def json(self) -> Dict:
-        if self.is_successful:
+        if self.is_success:
             return self.response.json()
         else:
             return {}
@@ -38,12 +38,12 @@ class ResponseWrapper:
 
     @property
     def text(self) -> str:
-        if self.is_successful:
+        if self.is_success:
             return self.response.text
         return ''
 
 
     @property
     def selector(self) -> Selector:
-        if self.is_successful:
+        if self.is_success:
             return Selector(self.text)
