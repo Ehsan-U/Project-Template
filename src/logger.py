@@ -1,5 +1,4 @@
 import logging
-import os
 
 
 # log_directory = "logs"

@@ -29,4 +29,4 @@ class Downloader():
 
     async def execute_tasks(self, tasks: List[Task]) -> Iterable[ResponseWrapper]:
         responses = await asyncio.gather(*tasks, return_exceptions=True)
-        return responses
+        return iter(responses)

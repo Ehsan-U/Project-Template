@@ -1,6 +1,6 @@
 from typing import Dict
 from httpx import Response
-from parsel import Selector
+from parsel import SelectorList, Selector
 
 
 
@@ -42,8 +42,7 @@ class ResponseWrapper:
             return self.response.text
         return ''
 
-
-    @property
-    def selector(self) -> Selector:
+    
+    def xpath(self, path) -> SelectorList[Selector]:
         if self.is_success:
-            return Selector(self.text)
+            return Selector(self.text).xpath(path)
