@@ -8,7 +8,7 @@ from src.http_response import ResponseWrapper
 from src.logger import logger
 
 
-class Spider():
+class Downloader():
     client = AsyncClient()
 
 
