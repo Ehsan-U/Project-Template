@@ -5,7 +5,7 @@ from asyncio.tasks import Task
 
 from src.http_requests import Request
 from src.http_response import ResponseWrapper
-from src.utils import logger
+from src.logger import logger
 
 
 class Spider():
