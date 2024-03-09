@@ -3,8 +3,7 @@ import os
 from typing import Dict, Tuple
 from tenacity import AsyncRetrying, stop_after_attempt, wait_random_exponential
 from httpx import AsyncClient, Response
-
-from src.utils import logger, ZYTE_API_KEY
+from src.logger import logger
 
 
 
@@ -75,7 +74,7 @@ class Request:
         self.follow_redirect = follow_redirect
         self.auth = auth
         self.zyte = zyte
-        self.zyte_api_key = zyte_api_key or ZYTE_API_KEY
+        self.zyte_api_key = zyte_api_key or os.getenv("ZYTE_API_KEY")
         self.browser = browser
 
 
@@ -102,7 +101,7 @@ class Request:
                         timeout=self.timeout,
                         follow_redirects=self.follow_redirect
                     )
-                    if not response.status_code in [200, 403]:
+                    if response.status_code not in [200, 403]:
                         response.raise_for_status()
                     logger.debug(f"Request sent to {self.url}: {response.status_code}")
                     return response
@@ -117,7 +116,7 @@ class Request:
                         json=json_payload,
                         timeout=self.timeout
                     )
-                    if not response.status_code in [200, 403]:
+                    if response.status_code not in [200, 403]:
                         response.raise_for_status()
                     logger.debug(f"Request sent to {self.url}: {response.status_code}")
 
