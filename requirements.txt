@@ -2,3 +2,4 @@ httpx
 aiolimiter
 parsel
 tenacity
+python-dotenv
